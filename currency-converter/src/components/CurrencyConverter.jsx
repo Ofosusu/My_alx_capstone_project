@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeftRight, Star, RefreshCw, TrendingUp } from 'lucide-react';
-import CurrencySelector from "./CurrencySelector.jsx";
-import AmountInput from "./AmountInput.jsx";
-import ConversionResult from "./ConversionResult.jsx";
+import { ArrowLeftRight, Star, RefreshCw, TrendingUp, AlertCircle } from 'lucide-react';
+import CurrencySelector from './CurrencySelector';
+import AmountInput from './AmountInput';
+import ConversionResult from './ConversionResult';
+import ExchangeRateDisplay from './ExchangeRateDisplay';
+import HistoricalTrends from './HistoricalTrends';
+import { fetchExchangeRates, convertCurrency } from '../services/exchangeRateService';
 
 export default function CurrencyConverter() {
   const [amount, setAmount] = useState('1');
   const [fromCurrency, setFromCurrency] = useState('USD');
   const [toCurrency, setToCurrency] = useState('EUR');
-  const [exchangeRate, setExchangeRate] = useState(0.8530);
-  const [convertedAmount, setConvertedAmount] = useState(0.8530);
+  const [exchangeRates, setExchangeRates] = useState({});
+  const [exchangeRate, setExchangeRate] = useState(0);
+  const [convertedAmount, setConvertedAmount] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [favorites, setFavorites] = useState(['USD-EUR', 'GBP-USD', 'EUR-GBP']);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const currencies = [
     'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 
@@ -26,23 +31,40 @@ export default function CurrencyConverter() {
   };
 
   useEffect(() => {
-    if (amount && !isNaN(amount)) {
-      setConvertedAmount((parseFloat(amount) * exchangeRate).toFixed(4));
+    loadExchangeRates();
+  }, [fromCurrency]);
+
+  useEffect(() => {
+    if (exchangeRates[toCurrency] && amount) {
+      const rate = exchangeRates[toCurrency];
+      setExchangeRate(rate);
+      setConvertedAmount(convertCurrency(amount, rate));
     }
-  }, [amount, exchangeRate]);
+  }, [amount, exchangeRates, toCurrency]);
+
+  const loadExchangeRates = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await fetchExchangeRates(fromCurrency);
+      setExchangeRates(data.rates);
+      setLastUpdated(data.lastUpdated);
+    } catch (err) {
+      setError('Failed to fetch exchange rates. Please try again.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSwapCurrencies = () => {
     setFromCurrency(toCurrency);
     setToCurrency(fromCurrency);
-    setExchangeRate(1 / exchangeRate);
   };
 
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLastUpdated(new Date());
-      setLoading(false);
-    }, 500);
+    loadExchangeRates();
   };
 
   const toggleFavorite = (pair) => {
@@ -68,9 +90,16 @@ export default function CurrencyConverter() {
           <p className="text-gray-600">Real-time exchange rates for 166+ currencies</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
         {/* Main Converter Card */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6">
-          {/* From Currency Selector */}
           <CurrencySelector
             label="From"
             value={fromCurrency}
@@ -79,23 +108,21 @@ export default function CurrencyConverter() {
             currencySymbols={currencySymbols}
           />
 
-          {/* Amount Input */}
           <AmountInput
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
 
-          {/* Swap Button */}
           <div className="flex justify-center mb-6">
             <button
               onClick={handleSwapCurrencies}
-              className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full hover:shadow-lg transform hover:scale-110 transition-all duration-200"
+              disabled={loading}
+              className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full hover:shadow-lg transform hover:scale-110 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowLeftRight className="w-6 h-6" />
             </button>
           </div>
 
-          {/* To Currency Selector */}
           <CurrencySelector
             label="To"
             value={toCurrency}
@@ -104,32 +131,21 @@ export default function CurrencyConverter() {
             currencySymbols={currencySymbols}
           />
 
-          {/* Conversion Result */}
           <ConversionResult
             convertedAmount={convertedAmount}
             toCurrency={toCurrency}
             currencySymbols={currencySymbols}
           />
 
-          {/* Exchange Rate Info */}
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Exchange Rate</p>
-                <p className="text-lg font-bold text-gray-800">
-                  1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600 mb-1">Last Updated</p>
-                <p className="text-sm font-semibold text-gray-700">
-                  {lastUpdated.toLocaleDateString()} {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* NEW: Detailed Exchange Rate Display */}
+          <ExchangeRateDisplay
+            fromCurrency={fromCurrency}
+            toCurrency={toCurrency}
+            exchangeRate={exchangeRate}
+            lastUpdated={lastUpdated}
+            loading={loading}
+          />
 
-          {/* Action Buttons */}
           <div className="flex gap-3">
             <button
               onClick={handleRefresh}
@@ -137,7 +153,7 @@ export default function CurrencyConverter() {
               className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all disabled:opacity-50"
             >
               <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh Rates
+              {loading ? 'Updating...' : 'Refresh Rates'}
             </button>
             <button
               onClick={() => toggleFavorite(currentPair)}
@@ -152,6 +168,13 @@ export default function CurrencyConverter() {
             </button>
           </div>
         </div>
+
+        {/* NEW: Historical Trends */}
+        <HistoricalTrends
+          fromCurrency={fromCurrency}
+          toCurrency={toCurrency}
+          currentRate={exchangeRate}
+        />
 
         {/* Favorite Pairs */}
         {favorites.length > 0 && (
@@ -180,8 +203,8 @@ export default function CurrencyConverter() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-600">
-          <p className="text-sm">Exchange rates updated regularly from reliable sources</p>
-          <p className="text-xs mt-2">Built with React and Tailwind CSS</p>
+          <p className="text-sm">Powered by ExchangeRate-API</p>
+          <p className="text-xs mt-2">By David Ofosu Amoah @2026</p>
         </div>
       </div>
     </div>
