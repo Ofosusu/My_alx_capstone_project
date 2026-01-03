@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeftRight, Star, RefreshCw, TrendingUp } from 'lucide-react';
+import CurrencySelector from "./CurrencySelector.jsx";
+import AmountInput from "./AmountInput.jsx";
+import ConversionResult from "./ConversionResult.jsx";
 
 export default function CurrencyConverter() {
   const [amount, setAmount] = useState('1');
@@ -67,42 +70,20 @@ export default function CurrencyConverter() {
 
         {/* Main Converter Card */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6">
-          {/* From Currency */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">From</label>
-            <div className="relative">
-              <select
-                value={fromCurrency}
-                onChange={(e) => setFromCurrency(e.target.value)}
-                className="w-full px-4 py-4 pr-10 text-lg font-semibold bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all appearance-none cursor-pointer"
-              >
-                {currencies.map(curr => (
-                  <option key={curr} value={curr}>
-                    {curr} {currencySymbols[curr] ? `(${currencySymbols[curr]})` : ''}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
+          {/* From Currency Selector */}
+          <CurrencySelector
+            label="From"
+            value={fromCurrency}
+            onChange={(e) => setFromCurrency(e.target.value)}
+            currencies={currencies}
+            currencySymbols={currencySymbols}
+          />
 
           {/* Amount Input */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Amount</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-4 py-4 text-lg font-semibold bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-              placeholder="Enter amount"
-              min="0"
-              step="0.01"
-            />
-          </div>
+          <AmountInput
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
 
           {/* Swap Button */}
           <div className="flex justify-center mb-6">
@@ -114,36 +95,21 @@ export default function CurrencyConverter() {
             </button>
           </div>
 
-          {/* To Currency */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">To</label>
-            <div className="relative">
-              <select
-                value={toCurrency}
-                onChange={(e) => setToCurrency(e.target.value)}
-                className="w-full px-4 py-4 pr-10 text-lg font-semibold bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all appearance-none cursor-pointer"
-              >
-                {currencies.map(curr => (
-                  <option key={curr} value={curr}>
-                    {curr} {currencySymbols[curr] ? `(${currencySymbols[curr]})` : ''}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
+          {/* To Currency Selector */}
+          <CurrencySelector
+            label="To"
+            value={toCurrency}
+            onChange={(e) => setToCurrency(e.target.value)}
+            currencies={currencies}
+            currencySymbols={currencySymbols}
+          />
 
-          {/* Converted Amount */}
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 mb-6">
-            <label className="block text-sm font-semibold text-blue-100 mb-2">Converted Amount</label>
-            <div className="text-3xl font-bold text-white">
-              {currencySymbols[toCurrency] || ''} {convertedAmount} {toCurrency}
-            </div>
-          </div>
+          {/* Conversion Result */}
+          <ConversionResult
+            convertedAmount={convertedAmount}
+            toCurrency={toCurrency}
+            currencySymbols={currencySymbols}
+          />
 
           {/* Exchange Rate Info */}
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
