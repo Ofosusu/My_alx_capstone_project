@@ -20,13 +20,13 @@ export default function CurrencyConverter() {
   const [error, setError] = useState(null);
 
   const currencies = [
-    'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 
+   'GHS', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 
     'SEK', 'NZD', 'MXN', 'SGD', 'HKD', 'NOK', 'KRW', 'TRY',
     'INR', 'BRL', 'ZAR', 'RUB'
   ];
 
   const currencySymbols = {
-    USD: '$', EUR: '€', GBP: '£', JPY: '¥', AUD: 'A$',
+   GHS: '₵', USD: '$', EUR: '€', GBP: '£', JPY: '¥', AUD: 'A$',
     CAD: 'C$', CHF: 'Fr', CNY: '¥', INR: '₹', BRL: 'R$'
   };
 
